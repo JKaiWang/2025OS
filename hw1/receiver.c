@@ -19,11 +19,22 @@ sem_t *receiver_sem = NULL;
 //mailbox_ptr 指向IPC mailbox 結構體 ，裡面存有message queue ID 或shared memory address
 void receive(message_t *message_ptr, mailbox_t *mailbox_ptr) 
 {
+    //receiver 一開始會被卡住（因為receiver_sem 初始值是0）
+    //當sender 傳送完一封訊息並執行 sem_post(receiver_sem)才會放行 ：目的是避免Receiver提前讀取或是重複讀取
     sem_wait(receiver_sem); // 等待 sender 通知（不計時）
 
     if (mailbox_ptr->flag == MSG_PASSING)
     {
         clock_gettime(CLOCK_MONOTONIC, &start);
+        /*
+            msgrcv():
+                mailbox->storage.msqid: QueueID
+                message_ptr: 要存放結果的結構（會直接寫入）
+                sizeof(message_ptr->msgText) 要讀取資料的大小
+                1 ->mType 只讀取mType = 1 的訊息
+                0 ->預設阻塞模式（若queue 是空的則等待）
+        
+        */
         if (msgrcv(mailbox_ptr->storage.msqid, message_ptr, sizeof(message_ptr->msgText), 1, 0) == -1)
         {
             perror("msgrcv failed");
@@ -33,11 +44,13 @@ void receive(message_t *message_ptr, mailbox_t *mailbox_ptr)
     }
     else if (mailbox_ptr->flag == SHARED_MEM)
     {
+        
         char *shm = mailbox_ptr->storage.shm_addr;
         clock_gettime(CLOCK_MONOTONIC, &start);
+        //strcpy(message_ptr0>msgText , shm+1): 從共享記憶體第二位元組開始（跳過其標shm[0]） 把文字複製到message_ptr中
         strcpy(message_ptr->msgText, shm + 1);
         clock_gettime(CLOCK_MONOTONIC, &end);
-        shm[0] = 0;
+        shm[0] = 0;//表示現在這塊共享記憶體是空的
     }
 
     total_time += (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
@@ -67,6 +80,11 @@ int main(int argc, char *argv[])
     if (mode == MSG_PASSING)
     {
         printf(BLUE"Message Passing\n"RESET);
+        // msgget()建立或取得一個System V Message Queue
+        // key: 透過ftok()產生唯一識別碼
+        // 0666(權限)|IPC_CREAT(若 queue 不存在就建立) :
+        //成功後就把queueID 存進mailbox.storage.msqid裡
+        //這樣Sender use same key to call msgsnd() and Receiver us msgrcv() 就能通訊
         mailbox.storage.msqid = msgget(key, 0666 | IPC_CREAT);
         if (mailbox.storage.msqid == -1)
         {
@@ -77,6 +95,12 @@ int main(int argc, char *argv[])
     else if (mode == SHARED_MEM)
     {
         printf(BLUE"Shared Memory\n"RESET);
+        // shmget(key , 1025 , 0666| IPC_CREAT)
+        // 建立一塊大小為1025的功用記憶體
+        //第一byte 為旗標，剩下1024 byte 儲存訊息 
+        // shmat()把這塊記憶體掛階到這個process 的位址空間
+        //return pointer to mailbox.storage.shm_addr裡
+        //之後用shm[0] control 同步狀態
         int shmid = shmget(key, 1025, 0666 | IPC_CREAT);
         mailbox.storage.shm_addr = (char *)shmat(shmid, NULL, 0);
         if (mailbox.storage.shm_addr == (char *)-1)
