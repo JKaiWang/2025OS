@@ -16,6 +16,7 @@ double total_time = 0.0;
 sem_t *sender_sem = NULL;
 sem_t *receiver_sem = NULL;
 // message_ptr指向要存放接收結果的訊息結構體。函式會寫進去 
+//mailbox_ptr 指向IPC mailbox 結構體 ，裡面存有message queue ID 或shared memory address
 void receive(message_t *message_ptr, mailbox_t *mailbox_ptr) 
 {
     sem_wait(receiver_sem); // 等待 sender 通知（不計時）

@@ -63,8 +63,7 @@ void send(message_t message, mailbox_t *mailbox_ptr) // message: message 結構�
     total_time += (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
     if (argc != 3)
     {
         fprintf(stderr, "Usage: %s <mode> <input.txt>\n", argv[0]);
