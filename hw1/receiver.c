@@ -15,8 +15,8 @@ double total_time = 0.0;
 
 sem_t *sender_sem = NULL;
 sem_t *receiver_sem = NULL;
-//
-void receive_message(message_t *message_ptr, mailbox_t *mailbox_ptr)
+// message_ptr指向要存放接收結果的訊息結構體。函式會寫進去 
+void receive(message_t *message_ptr, mailbox_t *mailbox_ptr) 
 {
     sem_wait(receiver_sem); // 等待 sender 通知（不計時）
 
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        receive_message(&message, &mailbox);
+        receive(&message, &mailbox);
         printf(BLUE"Receiving message: "RESET" \"%s\"\n", message.msgText);
 
         if (strcmp(message.msgText, "exit") == 0)
