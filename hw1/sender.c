@@ -5,12 +5,18 @@
 #include <errno.h>
 #include <string.h>
 
+#define BLUE  "\033[1;34m"
+#define YELLOW "\033[1;33m"
+#define RED "\033[1;31m"
+#define GREEN "\033[1;32m"
+#define RESET "\033[0m"
+
 struct timespec start, end;
 double total_time = 0.0;
 
 sem_t *sender_sem = NULL;
 sem_t *receiver_sem = NULL;
-
+//
 void send_message(message_t message, mailbox_t *mailbox_ptr)
 {
     // 等待 receiver 訊號（不計時）
@@ -67,6 +73,7 @@ int main(int argc, char *argv[])
     // 建立 IPC
     if (mode == MSG_PASSING)
     {
+        printf(BLUE"Message Passing\n"RESET);
         int msqid = msgget(key, IPC_CREAT | 0666);
         if (msqid == -1)
         {
@@ -77,6 +84,7 @@ int main(int argc, char *argv[])
     }
     else if (mode == SHARED_MEM)
     {
+        printf(BLUE"Shared Memory\n"RESET);
         int shmid = shmget(key, 1025, IPC_CREAT | 0666);
         if (shmid == -1)
         {
@@ -123,14 +131,14 @@ int main(int argc, char *argv[])
         buffer[strcspn(buffer, "\n")] = '\0';
         strcpy(msg.msgText, buffer);
         send_message(msg, &mailbox);
-        printf("[Sender] Sent message: %s\n", msg.msgText);
+        printf(BLUE"Sending message: "RESET"%s\n", msg.msgText);
     }
 
     strcpy(msg.msgText, "exit");
     send_message(msg, &mailbox);
-    printf("[Sender] Sent exit message.\n");
+    printf(RED "End of input file! exit!\n" RESET);
 
-    printf("[Sender] Total sending time: %.9f seconds\n", total_time);
+    printf("Total time taken in sending msg: %.9f s\n", total_time);
 
     fclose(fp);
     if (mode == SHARED_MEM)

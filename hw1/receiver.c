@@ -5,12 +5,17 @@
 #include <string.h>
 #include <semaphore.h>
 
+#define BLUE  "\033[1;34m"
+#define RED   "\033[1;31m"
+#define GREEN "\033[1;32m"
+#define RESET "\033[0m"
+
 struct timespec start, end;
 double total_time = 0.0;
 
 sem_t *sender_sem = NULL;
 sem_t *receiver_sem = NULL;
-
+//
 void receive_message(message_t *message_ptr, mailbox_t *mailbox_ptr)
 {
     sem_wait(receiver_sem); // 等待 sender 通知（不計時）
@@ -60,6 +65,7 @@ int main(int argc, char *argv[])
 
     if (mode == MSG_PASSING)
     {
+        printf(BLUE"Message Passing\n"RESET);
         mailbox.storage.msqid = msgget(key, 0666 | IPC_CREAT);
         if (mailbox.storage.msqid == -1)
         {
@@ -69,6 +75,7 @@ int main(int argc, char *argv[])
     }
     else if (mode == SHARED_MEM)
     {
+        printf(BLUE"Shared Memory\n"RESET);
         int shmid = shmget(key, 1025, 0666 | IPC_CREAT);
         mailbox.storage.shm_addr = (char *)shmat(shmid, NULL, 0);
         if (mailbox.storage.shm_addr == (char *)-1)
@@ -97,16 +104,17 @@ int main(int argc, char *argv[])
     while (1)
     {
         receive_message(&message, &mailbox);
-        printf("Receiver: received message \"%s\"\n", message.msgText);
+        printf(BLUE"Receiving message: "RESET" \"%s\"\n", message.msgText);
 
         if (strcmp(message.msgText, "exit") == 0)
         {
+            printf(RED"Sender exit!\n"RESET);
             sem_post(sender_sem); // prevent sender stuck
             break;
         }
     }
 
-    printf("Receiver: total receiving time = %.9f seconds\n", total_time);
+    printf("Total time taken in receiving msg: %.9f seconds\n", total_time);
 
     if (mode == SHARED_MEM)
     {
