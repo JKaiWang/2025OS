@@ -1,3 +1,5 @@
 # Ignore entire midterm folder
 midterm/*.pdf
+midterm/OS_Midterm_2017/*
+midterm/OS_Midterm_2018/*
 midterm.zip
