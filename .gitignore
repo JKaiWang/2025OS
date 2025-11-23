@@ -1,1 +1,3 @@
+# Ignore entire midterm folder
 midterm/*.pdf
+midterm.zip
