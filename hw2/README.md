@@ -24,7 +24,7 @@ Requirements 2.1–2.4 are documented below.
 
 ## Code
 
-```
+```c
 int cd(char **args)
 {
     if (args[1] == NULL) {
@@ -55,7 +55,7 @@ External commands are executed with the following sequence:
 
 ## Code
 
-```
+```c
 int spawn_proc(struct cmd_node *p)
 {
     pid_t pid = fork();
@@ -91,7 +91,7 @@ Redirection is handled with `open()` and `dup2()`:
 
 ## Code
 
-```
+```c
 void redirection(struct cmd_node *p)
 {
     if (p->in_file != NULL) {
@@ -139,7 +139,7 @@ cmd1 | cmd2 | cmd3
 
 ## Code
 
-```
+```c
 int fork_cmd_node(struct cmd *cmd)
 {
     int num = cmd->pipe_num;
