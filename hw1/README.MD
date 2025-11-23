@@ -64,7 +64,7 @@ This prevents:
 - Overwriting unread data
 - Busy waiting
 
----
+
 
 ## How the System Works
 
